@@ -1,0 +1,9 @@
+{
+  "GUILD_ID": {
+    "countThreshold": 5,
+    "lineThreshold": 15,
+    "pasteAttachments": true,
+    "ignoredChannels": [],
+    "autoPasteIfText": false
+  }
+}
