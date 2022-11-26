@@ -23,4 +23,13 @@
         <PackageReference Include="ZString" Version="2.5.0"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <Content Include="..\docker-compose.yaml">
+            <Link>docker-compose.yaml</Link>
+        </Content>
+        <Content Include="..\Dockerfile">
+            <Link>Dockerfile</Link>
+        </Content>
+    </ItemGroup>
+
 </Project>
