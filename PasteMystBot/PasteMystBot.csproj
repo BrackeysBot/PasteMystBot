@@ -43,6 +43,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="PasteMyst.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <Content Include="..\docker-compose.yaml">
             <Link>docker-compose.yaml</Link>
         </Content>
