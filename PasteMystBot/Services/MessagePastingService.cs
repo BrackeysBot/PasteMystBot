@@ -85,7 +85,7 @@ internal sealed class MessagePastingService
         {
             case 0 when !contentEmpty && _codeblockDetectionService.IsExclusivelyCodeblocks(content):
                 return await PasteMessageCodeblocksAsync(message, deleteMessage, false).ConfigureAwait(false);
-            case > 0 when contentEmpty && QualifiesForPasting(message):
+            case > 0 when AttachmentsQualifyForPasting(message):
                 return await PasteMessageAttachmentsAsync(message, deleteMessage, false).ConfigureAwait(false);
         }
 
