@@ -22,12 +22,29 @@ internal sealed class PasteCommand : ApplicationCommandModule
         _messagePastingService = messagePastingService;
     }
 
-    [ContextMenu(ApplicationCommandType.MessageContextMenu, "Upload Paste", false)]
+    [ContextMenu(ApplicationCommandType.MessageContextMenu, "Paste (Keep Message)", false)]
     [SlashRequireGuild]
-    public async Task UploadPasteAsync(ContextMenuContext context)
+    public async Task UploadPasteKeepMessageAsync(ContextMenuContext context)
     {
+        await PasteMessageAsync(context, false).ConfigureAwait(false);
+    }
+
+    [ContextMenu(ApplicationCommandType.MessageContextMenu, "Paste (Delete Message)", false)]
+    [SlashRequireGuild]
+    public async Task UploadPasteDeleteMessageAsync(ContextMenuContext context)
+    {
+        await PasteMessageAsync(context, true).ConfigureAwait(false);
+    }
+
+    private async Task PasteMessageAsync(ContextMenuContext context, bool deleteMessage)
+    {
+        DiscordMessage message = context.TargetMessage;
+
         await context.DeferAsync(true).ConfigureAwait(false);
-        await _messagePastingService.PasteMessageAsync(context.TargetMessage, context.Member).ConfigureAwait(false);
-        await context.EditResponseAsync(new DiscordWebhookBuilder().WithContent("Message pasted")).ConfigureAwait(false);
+        await _messagePastingService.PasteMessageAsync(message, context.Member, deleteMessage).ConfigureAwait(false);
+
+        var builder = new DiscordWebhookBuilder();
+        builder.WithContent("Message pasted");
+        await context.EditResponseAsync(builder).ConfigureAwait(false);
     }
 }
