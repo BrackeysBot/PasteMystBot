@@ -3,7 +3,7 @@
 <p align="center"><i>A Discord bot handling PasteMyst integration.</i></p>
 <p align="center">
 <a href="https://github.com/BrackeysBot/PasteMystBot/releases"><img src="https://img.shields.io/github/v/release/BrackeysBot/PasteMystBot?include_prereleases&style=flat-square"></a>
-<a href="https://github.com/BrackeysBot/PasteMystBot/actions?query=workflow%3A%22.NET%22"><img src="https://img.shields.io/github/workflow/status/BrackeysBot/PasteMystBot/.NET?style=flat-square" alt="GitHub Workflow Status" title="GitHub Workflow Status"></a>
+<a href="https://github.com/BrackeysBot/PasteMystBot/actions?query=workflow%3A%22.NET%22"><img src="https://img.shields.io/github/actions/workflow/status/BrackeysBot/PasteMystBot/dotnet.yml?style=flat-square" alt="GitHub Workflow Status" title="GitHub Workflow Status"></a>
 <a href="https://github.com/BrackeysBot/PasteMystBot/issues"><img src="https://img.shields.io/github/issues/BrackeysBot/PasteMystBot?style=flat-square" alt="GitHub Issues" title="GitHub Issues"></a>
 <a href="https://github.com/BrackeysBot/PasteMystBot/blob/main/LICENSE.md"><img src="https://img.shields.io/github/license/BrackeysBot/PasteMystBot?style=flat-square" alt="MIT License" title="MIT License"></a>
 </p>
