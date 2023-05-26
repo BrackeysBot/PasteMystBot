@@ -26,12 +26,18 @@ internal sealed class ColorfulConsoleTarget : TargetWithLayout
         message.Append(Layout.Render(logEvent));
 
         if (logEvent.Level == LogLevel.Warn)
+        {
             Console.ForegroundColor = ConsoleColor.Yellow;
+        }
         else if (logEvent.Level == LogLevel.Error || logEvent.Level == LogLevel.Fatal)
+        {
             Console.ForegroundColor = ConsoleColor.Red;
+        }
 
         if (logEvent.Exception is { } exception)
+        {
             message.Append($": {exception}");
+        }
 
         Console.WriteLine(message);
         Console.ResetColor();

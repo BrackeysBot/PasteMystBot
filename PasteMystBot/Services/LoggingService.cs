@@ -40,14 +40,20 @@ internal sealed class LoggingService : BackgroundService
     public async Task ArchiveLogFilesAsync(bool archiveToday = true)
     {
         var latestFile = new FileInfo(LogFile.FullName);
-        if (!latestFile.Exists) return;
+        if (!latestFile.Exists)
+        {
+            return;
+        }
 
         DateTime lastWrite = latestFile.LastWriteTime;
         string lastWriteDate = $"{lastWrite:yyyy-MM-dd}";
         var version = 0;
         string name;
 
-        if (!archiveToday && lastWrite.Date == DateTime.Today) return;
+        if (!archiveToday && lastWrite.Date == DateTime.Today)
+        {
+            return;
+        }
 
         while (File.Exists(name = Path.Combine(LogFile.Directory!.FullName, $"{lastWriteDate}-{++version}.log.gz")))
         {
@@ -82,7 +88,9 @@ internal sealed class LoggingService : BackgroundService
 #else
         LogLevel minLevel = LogLevel.Info;
         if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ENABLE_DEBUG_LOGGING")))
+        {
             minLevel = LogLevel.Debug;
+        }
 #endif
         config.AddRule(minLevel, LogLevel.Fatal, consoleLogger);
         config.AddRule(minLevel, LogLevel.Fatal, fileLogger);

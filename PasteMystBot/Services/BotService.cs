@@ -68,6 +68,7 @@ internal sealed class BotService : BackgroundService
         });
 
         Logger.Info("Registering commands...");
+        slashCommands.RegisterCommands<InfoCommand>();
         slashCommands.RegisterCommands<PasteCommand>();
 
         Logger.Info("Connecting to Discord...");
@@ -90,7 +91,9 @@ internal sealed class BotService : BackgroundService
         {
             Logger.Error(args.Exception, "An exception was thrown when performing autocomplete");
             if (args.Exception is DiscordException discordException)
+            {
                 Logger.Error($"API response: {discordException.JsonMessage}");
+            }
 
             return Task.CompletedTask;
         };
@@ -99,7 +102,9 @@ internal sealed class BotService : BackgroundService
         {
             var optionsString = "";
             if (args.Context.Interaction?.Data?.Options is { } options)
+            {
                 optionsString = $" {string.Join(" ", options.Select(o => $"{o?.Name}: '{o?.Value}'"))}";
+            }
 
             Logger.Info($"{args.Context.User} ran slash command /{args.Context.CommandName}{optionsString}");
             return Task.CompletedTask;
@@ -110,17 +115,34 @@ internal sealed class BotService : BackgroundService
             DiscordInteractionResolvedCollection? resolved = args.Context.Interaction?.Data?.Resolved;
             var properties = new List<string>();
             if (resolved?.Attachments?.Count > 0)
+            {
                 properties.Add($"attachments: {string.Join(", ", resolved.Attachments.Select(a => a.Value.Url))}");
+            }
+
             if (resolved?.Channels?.Count > 0)
+            {
                 properties.Add($"channels: {string.Join(", ", resolved.Channels.Select(c => c.Value.Name))}");
+            }
+
             if (resolved?.Members?.Count > 0)
+            {
                 properties.Add($"members: {string.Join(", ", resolved.Members.Select(m => m.Value.Id))}");
+            }
+
             if (resolved?.Messages?.Count > 0)
+            {
                 properties.Add($"messages: {string.Join(", ", resolved.Messages.Select(m => m.Value.Id))}");
+            }
+
             if (resolved?.Roles?.Count > 0)
+            {
                 properties.Add($"roles: {string.Join(", ", resolved.Roles.Select(r => r.Value.Id))}");
+            }
+
             if (resolved?.Users?.Count > 0)
+            {
                 properties.Add($"users: {string.Join(", ", resolved.Users.Select(r => r.Value.Id))}");
+            }
 
             Logger.Info($"{args.Context.User} invoked context menu '{args.Context.CommandName}' with resolved " +
                         string.Join("; ", properties));
@@ -140,7 +162,9 @@ internal sealed class BotService : BackgroundService
             string? name = context.Interaction.Data.Name;
             Logger.Error(args.Exception, $"An exception was thrown when executing context menu '{name}'");
             if (args.Exception is DiscordException discordException)
+            {
                 Logger.Error($"API response: {discordException.JsonMessage}");
+            }
 
             return Task.CompletedTask;
         };
@@ -157,7 +181,9 @@ internal sealed class BotService : BackgroundService
             string? name = context.Interaction.Data.Name;
             Logger.Error(args.Exception, $"An exception was thrown when executing slash command '{name}'");
             if (args.Exception is DiscordException discordException)
+            {
                 Logger.Error($"API response: {discordException.JsonMessage}");
+            }
 
             return Task.CompletedTask;
         };

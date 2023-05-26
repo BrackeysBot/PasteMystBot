@@ -20,7 +20,10 @@ internal sealed class PasteMystService
     {
         nameOrExtension = await GetLanguageNameByExtensionAsync(nameOrExtension).ConfigureAwait(false);
         if (nameOrExtension == AutodetectLanguage)
+        {
             nameOrExtension = await GetLanguageNameByNameAsync(nameOrExtension).ConfigureAwait(false);
+        }
+
         return nameOrExtension;
     }
 
@@ -31,8 +34,15 @@ internal sealed class PasteMystService
     /// <returns>The name of the language, or <c>Autodetect</c> if the language failed to be detected.</returns>
     public async Task<string> GetLanguageNameByExtensionAsync(string? extension)
     {
-        if (extension?.Length > 0 && extension[0] == '.') extension = extension[1..];
-        if (string.IsNullOrWhiteSpace(extension)) return AutodetectLanguage;
+        if (extension?.Length > 0 && extension[0] == '.')
+        {
+            extension = extension[1..];
+        }
+
+        if (string.IsNullOrWhiteSpace(extension))
+        {
+            return AutodetectLanguage;
+        }
 
         try
         {
@@ -52,7 +62,10 @@ internal sealed class PasteMystService
     /// <returns>The recognized name of the language, or <c>Autodetect</c> if the language failed to be detected.</returns>
     public async Task<string> GetLanguageNameByNameAsync(string? name)
     {
-        if (string.IsNullOrWhiteSpace(name)) return AutodetectLanguage;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return AutodetectLanguage;
+        }
 
         try
         {
@@ -80,7 +93,9 @@ internal sealed class PasteMystService
         ArgumentNullException.ThrowIfNull(pasties);
 
         if (pasties.Count == 0)
+        {
             return null;
+        }
 
         var pasteForm = new PasteMystPasteForm
         {

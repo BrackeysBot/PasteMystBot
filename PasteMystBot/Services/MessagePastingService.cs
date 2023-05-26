@@ -1,4 +1,4 @@
-﻿using DSharpPlus.Entities;
+using DSharpPlus.Entities;
 using NLog;
 using PasteMystBot.Configuration;
 using PasteMystBot.Data;
@@ -48,8 +48,16 @@ internal sealed class MessagePastingService
     public bool IsChannelExempt(DiscordChannel channel)
     {
         ArgumentNullException.ThrowIfNull(channel);
-        if (channel.Guild is not { } guild) return true;
-        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration)) return false;
+        if (channel.Guild is not { } guild)
+        {
+            return true;
+        }
+
+        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration))
+        {
+            return false;
+        }
+
         return Array.IndexOf(configuration.IgnoredChannels, channel.Id) > -1;
     }
 
@@ -71,7 +79,6 @@ internal sealed class MessagePastingService
 
         string content = message.Content;
         bool contentEmpty = string.IsNullOrWhiteSpace(content);
-        if (contentEmpty) return false;
 
         int attachmentsCount = message.Attachments.Count;
         switch (attachmentsCount)
@@ -92,8 +99,15 @@ internal sealed class MessagePastingService
             }
         });
 
-        if (paste is null) return false;
-        if (deleteMessage) await message.DeleteAsync("Auto-pasted").ConfigureAwait(false);
+        if (paste is null)
+        {
+            return false;
+        }
+
+        if (deleteMessage)
+        {
+            await message.DeleteAsync("Auto-pasted").ConfigureAwait(false);
+        }
 
         var response = $"{message.Author.Mention}, your message was pasted to {paste.Url}";
         await message.Channel.SendMessageAsync(response).ConfigureAwait(false);
@@ -149,11 +163,18 @@ internal sealed class MessagePastingService
         }
 
         PasteMystPaste? paste = await _pasteMystService.PastePastiesAsync(message.Author, pasties);
-        if (paste is null) return false;
-        if (deleteMessage) await message.DeleteAsync("Auto-pasted").ConfigureAwait(false);
+        if (paste is null)
+        {
+            return false;
+        }
+
+        if (deleteMessage)
+        {
+            await message.DeleteAsync("Auto-pasted").ConfigureAwait(false);
+        }
 
         string phrase = pasties.Count > 1 ? "attachments were" : "attachment was";
-        string response =
+        var response =
             $"{message.Author.Mention}, your {phrase + (quoteAutomatically ? " automatically" : "")} pasted to {paste.Url}";
         await message.Channel.SendMessageAsync(response).ConfigureAwait(false);
 
@@ -183,7 +204,10 @@ internal sealed class MessagePastingService
         ArgumentNullException.ThrowIfNull(message);
 
         IReadOnlyList<string> codeblocks = _codeblockDetectionService.DetectCodeblocks(message.Content);
-        if (codeblocks.Count == 0) return false;
+        if (codeblocks.Count == 0)
+        {
+            return false;
+        }
 
         var pasties = new List<PasteMystPastyForm>();
 
@@ -201,8 +225,15 @@ internal sealed class MessagePastingService
         }
 
         PasteMystPaste? paste = await _pasteMystService.PastePastiesAsync(message.Author, pasties);
-        if (paste is null) return false;
-        if (deleteMessage) await message.DeleteAsync("Auto-pasted").ConfigureAwait(false);
+        if (paste is null)
+        {
+            return false;
+        }
+
+        if (deleteMessage)
+        {
+            await message.DeleteAsync("Auto-pasted").ConfigureAwait(false);
+        }
 
         string phrase = pasties.Count > 1 ? "codeblocks were" : "codeblock was";
         string response =
@@ -227,40 +258,31 @@ internal sealed class MessagePastingService
     {
         ArgumentNullException.ThrowIfNull(message);
 
-        if (!_configurationService.TryGetGuildConfiguration(message.Channel.Guild, out GuildConfiguration? configuration))
+        if (!_configurationService.TryGetGuildConfiguration(message.Channel.Guild,
+                out GuildConfiguration? configuration))
+        {
             configuration = new GuildConfiguration();
+        }
 
         string content = message.Content;
-        IReadOnlyList<DiscordAttachment> attachments = message.Attachments;
-
         if (string.IsNullOrWhiteSpace(content))
         {
-            if (configuration.PasteAttachments && attachments.Count > 0)
-            {
-                foreach (DiscordAttachment attachment in attachments)
-                {
-                    string mimeType = attachment.MediaType;
-                    if (mimeType.Contains(';'))
-                        mimeType = mimeType[..mimeType.IndexOf(';')];
-                    if (mimeType != "text/plain")
-                        return false;
-                }
-
-                return true;
-            }
-
-            return false;
+            return AttachmentsQualifyForPasting(message);
         }
 
         if (!_codeblockDetectionService.IsExclusivelyCodeblocks(content) && !configuration.AutoPasteIfText)
+        {
             return false;
+        }
 
         IReadOnlyList<string> codeblocks = _codeblockDetectionService.DetectCodeblocks(message.Content);
         int countThreshold = configuration.CountThreshold;
         int lineThreshold = configuration.LineThreshold;
 
         if (countThreshold > -1 && codeblocks.Count > countThreshold)
+        {
             return true;
+        }
 
         if (lineThreshold > -1)
         {
@@ -272,10 +294,45 @@ internal sealed class MessagePastingService
                 Console.WriteLine(lineCount);
                 Console.WriteLine(lineThreshold);
                 if (lineCount > lineThreshold)
+                {
                     return true;
+                }
             }
         }
 
         return false;
+    }
+
+    private bool AttachmentsQualifyForPasting(DiscordMessage message)
+    {
+        DiscordGuild guild = message.Channel.Guild;
+        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration))
+        {
+            return false;
+        }
+
+        IReadOnlyList<DiscordAttachment> attachments = message.Attachments;
+        if (!configuration.PasteAttachments || attachments.Count <= 0)
+        {
+            return false;
+        }
+
+        foreach (DiscordAttachment attachment in attachments)
+        {
+            string mimeType = attachment.MediaType;
+            if (mimeType.Contains(';'))
+            {
+                mimeType = mimeType[..mimeType.IndexOf(';')];
+            }
+
+            if (mimeType != "text/plain")
+            {
+                return true;
+            }
+        }
+
+        {
+            return true;
+        }
     }
 }

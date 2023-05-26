@@ -13,8 +13,15 @@ public readonly struct Codeblock
     /// <param name="language">The language name of the codeblock.</param>
     public Codeblock(string content, string? language)
     {
-        if (string.IsNullOrWhiteSpace(content)) content = string.Empty;
-        if (string.IsNullOrWhiteSpace(language)) language = null;
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            content = string.Empty;
+        }
+
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            language = null;
+        }
 
         Content = content;
         Language = language;
@@ -97,8 +104,16 @@ public readonly struct Codeblock
         chars = stackalloc char[codeBuffer.Length];
         Encoding.UTF8.GetChars(codeBuffer.AsSpan(), chars);
 
-        if (chars.IsEmpty) chars = Span<char>.Empty;
-        if (language.IsEmpty) language = Span<char>.Empty;
+        if (chars.IsEmpty)
+        {
+            chars = Span<char>.Empty;
+        }
+
+        if (language.IsEmpty)
+        {
+            language = Span<char>.Empty;
+        }
+
         return new Codeblock(chars.Trim('\0').Trim().ToString(), language.Trim('\0').Trim().ToString().AsNullIfWhiteSpace());
     }
 }

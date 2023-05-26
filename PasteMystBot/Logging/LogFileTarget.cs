@@ -33,7 +33,9 @@ internal sealed class LogFileTarget : TargetWithLayout
         writer.Write(Layout.Render(logEvent));
 
         if (logEvent.Exception is { } exception)
+        {
             writer.Write($": {exception}");
+        }
 
         writer.WriteLine();
     }

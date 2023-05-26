@@ -26,7 +26,10 @@ internal sealed class CodeblockDetectionService
             {
                 codeblocks.Add(destination[start..index].ToString());
                 start = index + 1;
-                if (codeblocks.Count == count) break;
+                if (codeblocks.Count == count)
+                {
+                    break;
+                }
             }
         }
 
@@ -119,15 +122,26 @@ internal sealed class CodeblockDetectionService
 
         static int CopyChars(Span<char> source, Span<char> destination, int sourceStart, int destinationStart, int count)
         {
-            if (source.Length <= sourceStart + count) return -1;
+            if (source.Length <= sourceStart + count)
+            {
+                return -1;
+            }
 
             var success = 0;
 
             for (int sourceIndex = sourceStart, destinationIndex = destinationStart;
                  sourceIndex < count && sourceIndex < destination.Length;)
             {
-                if (destinationIndex >= destination.Length) break;
-                if (source[sourceIndex] == '\0') break;
+                if (destinationIndex >= destination.Length)
+                {
+                    break;
+                }
+
+                if (source[sourceIndex] == '\0')
+                {
+                    break;
+                }
+
                 destination[destinationIndex++] = source[sourceIndex++];
                 success++;
             }
@@ -186,8 +200,15 @@ internal sealed class CodeblockDetectionService
     public bool IsExclusivelyCodeblocks(ReadOnlySpan<char> source)
     {
         source = source.Trim();
-        if (!source.StartsWith("```")) return false;
-        if (!source.EndsWith("```")) return false;
+        if (!source.StartsWith("```"))
+        {
+            return false;
+        }
+
+        if (!source.EndsWith("```"))
+        {
+            return false;
+        }
 
         var isInBlock = false;
         var index = 0;
