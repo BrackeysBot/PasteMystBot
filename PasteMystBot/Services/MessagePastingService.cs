@@ -140,7 +140,9 @@ internal sealed class MessagePastingService
 
         foreach (DiscordAttachment attachment in message.Attachments)
         {
-            string content = await _httpClient.GetStringAsync(attachment.Url).ConfigureAwait(false);
+            await using Stream stream = await _httpClient.GetStreamAsync(attachment.Url).ConfigureAwait(false);
+            using var reader = new StreamReader(stream);
+            string content = await reader.ReadToEndAsync().ConfigureAwait(false);
             string title = attachment.FileName;
             var language = "Autodetect";
 
