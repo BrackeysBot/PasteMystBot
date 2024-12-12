@@ -28,7 +28,7 @@ internal sealed class GuildConfiguration
     ///     Gets or sets the array of exempt channels for auto-pasting.
     /// </summary>
     /// <value>An array of channel IDs to ignore when auto-pasting a message.</value>
-    public ulong[] IgnoredChannels { get; set; } = Array.Empty<ulong>();
+    public ulong[] IgnoredChannels { get; set; } = [];
 
     /// <summary>
     ///     Gets or sets the line threshold for pasting a codeblock to PasteMyst.

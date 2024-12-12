@@ -92,15 +92,14 @@ internal sealed class MessagePastingService
                 return await PasteMessageAttachmentsAsync(message, deleteMessage, false);
         }
 
-        PasteMystPaste? paste = await _pasteMystService.PastePastiesAsync(message.Author, new[]
-        {
+        PasteMystPaste? paste = await _pasteMystService.PastePastiesAsync(message.Author, [
             new PasteMystPastyForm
             {
                 Title = "(untitled)",
                 Language = "Autodetect",
                 Content = content
             }
-        });
+        ]);
 
         if (paste is null)
         {
