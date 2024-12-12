@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Cysharp.Text;
+﻿using PasteMystBot.Data;
 
 namespace PasteMystBot.Services;
 
@@ -9,145 +8,69 @@ namespace PasteMystBot.Services;
 internal sealed class CodeblockDetectionService
 {
     /// <summary>
-    ///     Detects the codeblocks from a given string.
+    ///     Returns a list of all the codeblocks in the input.
     /// </summary>
-    /// <param name="source">The source string.</param>
-    /// <returns>A read-only view of the codeblocks that appear in <paramref name="source" />.</returns>
-    public IReadOnlyList<string> DetectCodeblocks(string source)
+    /// <param name="source">The string through which to search.</param>
+    /// <returns>A read-only view of the codeblocks in <paramref name="source" />.</returns>
+    public IReadOnlyList<Codeblock> DetectCodeblocks(string source)
     {
-        var codeblocks = new List<string>();
-        Span<char> destination = stackalloc char[source.Length];
-        int count = DetectCodeblocks(source, destination);
-
-        for (int index = 0, start = 0; index < destination.Length; index++)
+        if (string.IsNullOrWhiteSpace(source))
         {
-            char current = destination[index];
-            if (current == '\0')
-            {
-                codeblocks.Add(destination[start..index].ToString());
-                start = index + 1;
-                if (codeblocks.Count == count)
-                {
-                    break;
-                }
-            }
+            return Array.Empty<Codeblock>();
         }
 
-        return codeblocks.AsReadOnly();
+        return DetectCodeblocks(source.AsSpan());
     }
 
     /// <summary>
-    ///     Detects the codeblocks from a given character span.
+    ///     Returns a list of all the codeblocks in the input.
     /// </summary>
-    /// <param name="source">The source character span.</param>
-    /// <param name="destination">The destination to which codeblocks will be written.</param>
-    /// <returns>The number of codeblocks that appear in <paramref name="source" />.</returns>
-    public int DetectCodeblocks(ReadOnlySpan<char> source, Span<char> destination)
+    /// <param name="source">The span of characters through which to search.</param>
+    /// <returns>A read-only view of the codeblocks in <paramref name="source" />.</returns>
+    public IReadOnlyList<Codeblock> DetectCodeblocks(ReadOnlySpan<char> source)
     {
-        // Ported from an original C implementation by Pi Man:
-        /* int detectCodeblock(char * s, char ** blocks, int blocks_size) {
-  char * text = s;
-  int block_index = 0;
-  int is_in_block = 0;
-  blocks[0] = NULL;
-  while(*text) {
-    if (block_index + 2 >= blocks_size) return -1;
-    if (strncmp(text, "```", 3) == 0) {
-      if (is_in_block) {
-        blocks[block_index + 1] = (text += 3);
-        blocks[block_index + 2] = NULL;
-        block_index += 2;
-      }
-      else {
-        blocks[block_index] = (text += 3);
-      }
-    }
-    text++;
-  }
-  if (is_in_block) {
-    blocks[block_index] = NULL;
-  }
-  return 0;
-} */
-        Utf8ValueStringBuilder buffer = ZString.CreateUtf8StringBuilder();
-        Span<char> chars = stackalloc char[source.Length];
-        destination.Fill('\0');
+        const string fence = "```";
+        var codeblocks = new List<Codeblock>();
+        int start = 0;
 
-        var isInBlock = false;
-        var index = 0;
-        var destinationIndex = 0;
-        var blockCount = 0;
-
-        while (index < source.Length)
+        while (start < source.Length)
         {
-            int end = Math.Min(index + 3, source.Length);
-            ReadOnlySpan<char> segment = source[index..end];
-            if (segment.Equals("```", StringComparison.Ordinal))
+            int fenceStart = source[start..].IndexOf(fence.AsSpan());
+            if (fenceStart == -1)
             {
-                index += 2;
-
-                if (isInBlock)
-                {
-                    if (buffer.Length > 0)
-                    {
-                        ReadOnlySpan<byte> bytes = buffer.AsSpan();
-                        Encoding.UTF8.GetChars(bytes, chars);
-                        int copy = CopyChars(chars, destination, 0, destinationIndex, bytes.Length);
-                        if (copy != -1)
-                        {
-                            destinationIndex += bytes.Length + 1;
-                            blockCount++;
-                        }
-
-                        buffer.Clear();
-                        chars.Clear();
-                    }
-
-                    isInBlock = false;
-                }
-                else
-                {
-                    isInBlock = true;
-                }
-            }
-            else if (isInBlock)
-            {
-                buffer.Append(source[index]);
+                break;
             }
 
-            index++;
+            fenceStart += start;
+            int fenceEnd = fenceStart + fence.Length;
+
+            int newlineIdx = source[fenceEnd..].IndexOf('\n');
+            if (newlineIdx == -1)
+            {
+                break;
+            }
+
+            newlineIdx += fenceEnd;
+
+            ReadOnlySpan<char> languageLine = source.Slice(fenceEnd, newlineIdx - fenceEnd).Trim();
+
+            int closingFenceStart = source[newlineIdx..].IndexOf(fence.AsSpan());
+            if (closingFenceStart == -1)
+            {
+                break;
+            }
+
+            closingFenceStart += newlineIdx;
+            int closingFenceEnd = closingFenceStart + fence.Length;
+
+            // exclude fences
+            var content = source.Slice(newlineIdx, closingFenceStart - newlineIdx).Trim().ToString();
+            codeblocks.Add(new Codeblock(content, languageLine.ToString()));
+
+            start = closingFenceEnd;
         }
 
-        return blockCount;
-
-        static int CopyChars(Span<char> source, Span<char> destination, int sourceStart, int destinationStart, int count)
-        {
-            if (source.Length <= sourceStart + count)
-            {
-                return -1;
-            }
-
-            var success = 0;
-
-            for (int sourceIndex = sourceStart, destinationIndex = destinationStart;
-                 sourceIndex < count && sourceIndex < destination.Length;)
-            {
-                if (destinationIndex >= destination.Length)
-                {
-                    break;
-                }
-
-                if (source[sourceIndex] == '\0')
-                {
-                    break;
-                }
-
-                destination[destinationIndex++] = source[sourceIndex++];
-                success++;
-            }
-
-            return success;
-        }
+        return codeblocks.AsReadOnly();
     }
 
     /// <summary>
@@ -173,7 +96,31 @@ internal sealed class CodeblockDetectionService
     /// </returns>
     public bool HasCodeblock(ReadOnlySpan<char> content)
     {
-        return DetectCodeblocks(content, Span<char>.Empty) > 0;
+        const string fence = "```";
+        int start = 0;
+
+        while (start < content.Length)
+        {
+            int fenceStart = content[start..].IndexOf(fence.AsSpan());
+            if (fenceStart == -1)
+            {
+                break;
+            }
+
+            fenceStart += start;
+            int fenceEnd = fenceStart + fence.Length;
+
+            // check for closing fence
+            int closingFenceStart = content[fenceEnd..].IndexOf(fence.AsSpan());
+            if (closingFenceStart != -1)
+            {
+                return true;
+            }
+
+            start = fenceEnd;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -199,37 +146,35 @@ internal sealed class CodeblockDetectionService
     /// </returns>
     public bool IsExclusivelyCodeblocks(ReadOnlySpan<char> source)
     {
-        source = source.Trim();
-        if (!source.StartsWith("```"))
-        {
-            return false;
-        }
+        const string fence = "```";
+        int start = 0;
 
-        if (!source.EndsWith("```"))
+        while (start < source.Length)
         {
-            return false;
-        }
-
-        var isInBlock = false;
-        var index = 0;
-
-        while (index < source.Length)
-        {
-            int end = Math.Min(index + 3, source.Length);
-            ReadOnlySpan<char> segment = source[index..end];
-            if (segment.Equals("```", StringComparison.Ordinal))
+            source = source[start..].TrimStart();
+            if (source.IsEmpty)
             {
-                index += 2;
-                isInBlock = !isInBlock;
-            }
-            else if (!isInBlock && !char.IsWhiteSpace(source[index]))
-            {
-                return false;
+                return true; // Only whitespace left
             }
 
-            index++;
+            if (!source.StartsWith(fence.AsSpan()))
+            {
+                return false; // Non-codeblock content found
+            }
+
+            int fenceEnd = fence.Length;
+
+            int closingFenceStart = source[fenceEnd..].IndexOf(fence.AsSpan());
+            if (closingFenceStart == -1)
+            {
+                return false; // unclosed codeblock found
+            }
+
+            closingFenceStart += fenceEnd;
+
+            start = closingFenceStart + fence.Length;
         }
 
-        return true;
+        return true; // Entire source is valid
     }
 }

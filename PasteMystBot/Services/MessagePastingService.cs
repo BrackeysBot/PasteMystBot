@@ -1,4 +1,5 @@
 using DSharpPlus.Entities;
+using Humanizer;
 using Microsoft.Extensions.Logging;
 using PasteMystBot.Configuration;
 using PasteMystBot.Data;
@@ -214,19 +215,21 @@ internal sealed class MessagePastingService
     {
         ArgumentNullException.ThrowIfNull(message);
 
-        IReadOnlyList<string> codeblocks = _codeblockDetectionService.DetectCodeblocks(message.Content);
+        IReadOnlyList<Codeblock> codeblocks = _codeblockDetectionService.DetectCodeblocks(message.Content);
         if (codeblocks.Count == 0)
         {
+            _logger.LogDebug("{Message} contains no codeblocks", message);
             return false;
         }
 
-        var pasties = new List<PasteMystPastyForm>();
+        _logger.LogDebug("{Message} contains codeblocks", message);
 
-        foreach (string content in codeblocks)
+        var pasties = new List<PasteMystPastyForm>();
+        foreach (Codeblock codeblock in codeblocks)
         {
-            Codeblock codeblock = Codeblock.Parse(content);
             string language = await _pasteMystService.GetLanguageNameAsync(codeblock.Language);
 
+            _logger.LogDebug("Creating pastie for {Language} codeblock", language);
             pasties.Add(new PasteMystPastyForm
             {
                 Title = "(untitled)",
@@ -285,15 +288,17 @@ internal sealed class MessagePastingService
         string content = message.Content;
         if (string.IsNullOrWhiteSpace(content))
         {
+            _logger.LogDebug("{Message} has no content. Checking for attachments qualification", message);
             return AttachmentsQualifyForPasting(message);
         }
 
         if (!_codeblockDetectionService.IsExclusivelyCodeblocks(content) && !configuration.AutoPasteIfText)
         {
+            _logger.LogDebug("{Message} does not qualify for pasting: is not exclusively codeblocks", message);
             return false;
         }
 
-        IReadOnlyList<string> codeblocks = _codeblockDetectionService.DetectCodeblocks(message.Content);
+        IReadOnlyList<Codeblock> codeblocks = _codeblockDetectionService.DetectCodeblocks(message.Content);
         int countThreshold = configuration.CountThreshold;
         int lineThreshold = configuration.LineThreshold;
 
@@ -304,13 +309,9 @@ internal sealed class MessagePastingService
 
         if (lineThreshold > -1)
         {
-            foreach (string rawCodeblock in codeblocks)
+            foreach (Codeblock codeblock in codeblocks)
             {
-                Codeblock codeblock = Codeblock.Parse(rawCodeblock);
                 int lineCount = codeblock.Content.CountSubstring('\n') + 1;
-                Console.WriteLine(codeblock.Content);
-                Console.WriteLine(lineCount);
-                Console.WriteLine(lineThreshold);
                 if (lineCount > lineThreshold)
                 {
                     return true;
@@ -326,12 +327,14 @@ internal sealed class MessagePastingService
         DiscordGuild guild = message.Channel.Guild;
         if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration))
         {
+            _logger.LogWarning("{Guild} is not configured", guild);
             return false;
         }
 
         IReadOnlyList<DiscordAttachment> attachments = message.Attachments;
         if (!configuration.PasteAttachments || attachments.Count <= 0)
         {
+            _logger.LogWarning("{Message} does not qualify for pasting", message);
             return false;
         }
 
@@ -345,12 +348,12 @@ internal sealed class MessagePastingService
 
             if (mimeType != "text/plain")
             {
-                return true;
+                _logger.LogDebug("{Message} does not qualify for pasting - has attachment that is not text/plain", message);
+                return false;
             }
         }
 
-        {
-            return true;
-        }
+        _logger.LogDebug("{Message} attachments qualify for pasting", message);
+        return true;
     }
 }

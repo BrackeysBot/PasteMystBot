@@ -1,4 +1,6 @@
 ﻿using DSharpPlus.Entities;
+using Humanizer;
+using Microsoft.Extensions.Logging;
 using PasteMystBot.Extensions;
 using PasteMystNet;
 
@@ -9,11 +11,18 @@ namespace PasteMystBot.Services;
 /// </summary>
 internal sealed class PasteMystService
 {
+    private readonly ILogger<PasteMystService> _logger;
     private readonly PasteMystClient _pasteMystClient;
     private const string AutodetectLanguage = "Autodetect";
 
-    public PasteMystService(PasteMystClient pasteMystClient)
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="PasteMystService" /> class.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    /// <param name="pasteMystClient">The PasteMyst client.</param>
+    public PasteMystService(ILogger<PasteMystService> logger, PasteMystClient pasteMystClient)
     {
+        _logger = logger;
         _pasteMystClient = pasteMystClient;
     }
 
@@ -111,6 +120,8 @@ internal sealed class PasteMystService
 
         try
         {
+            string quantity = "pastie".ToQuantity(pasteForm.Pasties.Count);
+            _logger.LogInformation("Creating paste: {Title}, {Count}", pasteForm.Title, quantity);
             return await _pasteMystClient.CreatePasteAsync(pasteForm);
         }
         catch
