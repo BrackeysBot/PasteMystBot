@@ -10,35 +10,34 @@ using X10D.Hosting.DependencyInjection;
 
 Directory.CreateDirectory("data");
 
-await Host.CreateDefaultBuilder(args)
-    .ConfigureAppConfiguration(builder => builder.AddJsonFile("data/config.json", true, true))
-    .ConfigureLogging(builder =>
-    {
-        builder.ClearProviders();
-        builder.AddNLog();
-    })
-    .ConfigureServices(services =>
-    {
-        services.AddSingleton(new PasteMystClient());
-        services.AddSingleton(new DiscordClient(new DiscordConfiguration
-        {
-            Token = Environment.GetEnvironmentVariable("DISCORD_TOKEN"),
-            LoggerFactory = new NLogLoggerFactory(),
-            Intents = DiscordIntents.AllUnprivileged | DiscordIntents.GuildMembers | DiscordIntents.MessageContents
-        }));
+HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+builder.Configuration.AddJsonFile("data/config.json", true, true);
 
-        services.AddHostedSingleton<LoggingService>();
+builder.Logging.ClearProviders();
+builder.Logging.AddNLog();
 
-        services.AddSingleton<HttpClient>();
-        services.AddSingleton<ConfigurationService>();
-        services.AddSingleton<CodeblockDetectionService>();
-        services.AddSingleton<MessagePastingService>();
-        services.AddSingleton<PasteMystService>();
+builder.Services.AddSingleton(new PasteMystClient());
 
-        services.AddHostedSingleton<FileAttachmentListeningService>();
-        services.AddHostedSingleton<MessageListeningService>();
+builder.Services.AddSingleton(new PasteMystClient());
+builder.Services.AddSingleton(new DiscordClient(new DiscordConfiguration
+{
+    Token = Environment.GetEnvironmentVariable("DISCORD_TOKEN"),
+    LoggerFactory = new NLogLoggerFactory(),
+    Intents = DiscordIntents.AllUnprivileged | DiscordIntents.GuildMembers | DiscordIntents.MessageContents
+}));
 
-        services.AddHostedSingleton<BotService>();
-    })
-    .UseConsoleLifetime()
-    .RunConsoleAsync();
+builder.Services.AddHostedSingleton<LoggingService>();
+
+builder.Services.AddSingleton<HttpClient>();
+builder.Services.AddSingleton<ConfigurationService>();
+builder.Services.AddSingleton<CodeblockDetectionService>();
+builder.Services.AddSingleton<MessagePastingService>();
+builder.Services.AddSingleton<PasteMystService>();
+
+builder.Services.AddHostedSingleton<FileAttachmentListeningService>();
+builder.Services.AddHostedSingleton<MessageListeningService>();
+
+builder.Services.AddHostedSingleton<BotService>();
+
+IHost app = builder.Build();
+await app.RunAsync();
