@@ -1,5 +1,5 @@
 using DSharpPlus.Entities;
-using NLog;
+using Microsoft.Extensions.Logging;
 using PasteMystBot.Configuration;
 using PasteMystBot.Data;
 using PasteMystNet;
@@ -12,7 +12,7 @@ namespace PasteMystBot.Services;
 /// </summary>
 internal sealed class MessagePastingService
 {
-    private static readonly ILogger Logger = LogManager.GetCurrentClassLogger();
+    private readonly ILogger<MessagePastingService> _logger;
     private readonly HttpClient _httpClient;
     private readonly ConfigurationService _configurationService;
     private readonly CodeblockDetectionService _codeblockDetectionService;
@@ -21,17 +21,20 @@ internal sealed class MessagePastingService
     /// <summary>
     ///     Initializes a new instance of the <see cref="MessagePastingService" /> class.
     /// </summary>
+    /// <param name="logger">The logger.</param>
     /// <param name="httpClient">The HTTP client.</param>
     /// <param name="configurationService">The configuration service.</param>
     /// <param name="codeblockDetectionService">The codeblock detection service.</param>
     /// <param name="pasteMystService">The PasteMyst service.</param>
     public MessagePastingService(
+        ILogger<MessagePastingService> logger,
         HttpClient httpClient,
         ConfigurationService configurationService,
         CodeblockDetectionService codeblockDetectionService,
         PasteMystService pasteMystService
     )
     {
+        _logger = logger;
         _httpClient = httpClient;
         _configurationService = configurationService;
         _codeblockDetectionService = codeblockDetectionService;
@@ -112,7 +115,7 @@ internal sealed class MessagePastingService
         var response = $"{message.Author.Mention}, your message was pasted to {paste.Url}";
         await message.Channel.SendMessageAsync(response).ConfigureAwait(false);
 
-        Logger.Info($"Message by {message.Author} was pasted to {paste.Url} by {paster}");
+        _logger.LogInformation("Message by {Author} was pasted to {Url} by {User}", message.Author, paste.Url, paster);
         return true;
     }
 
@@ -164,7 +167,9 @@ internal sealed class MessagePastingService
             });
         }
 
-        PasteMystPaste? paste = await _pasteMystService.PastePastiesAsync(message.Author, pasties);
+        DiscordUser author = message.Author;
+        PasteMystPaste? paste = await _pasteMystService.PastePastiesAsync(author, pasties);
+
         if (paste is null)
         {
             return false;
@@ -176,12 +181,17 @@ internal sealed class MessagePastingService
         }
 
         string phrase = pasties.Count > 1 ? "attachments were" : "attachment was";
-        var response =
-            $"{message.Author.Mention}, your {phrase + (quoteAutomatically ? " automatically" : "")} pasted to {paste.Url}";
+        string automatically = quoteAutomatically ? " automatically" : string.Empty;
+        var response = $"{author.Mention}, your {phrase + automatically} pasted to {paste.Url}";
         await message.Channel.SendMessageAsync(response).ConfigureAwait(false);
 
-        Logger.Info(
-            $"{pasties.Count}{phrase + (quoteAutomatically ? " automatically" : "")} pasted to {paste.Url} ({message.Author})");
+        _logger.LogInformation("{Count}{Phrase}{Automatic} pasted to {Url} ({Author})",
+            pasties.Count,
+            phrase,
+            automatically,
+            paste.Url,
+            author
+        );
         return true;
     }
 
@@ -226,7 +236,9 @@ internal sealed class MessagePastingService
             });
         }
 
-        PasteMystPaste? paste = await _pasteMystService.PastePastiesAsync(message.Author, pasties);
+        DiscordUser author = message.Author;
+        PasteMystPaste? paste = await _pasteMystService.PastePastiesAsync(author, pasties);
+
         if (paste is null)
         {
             return false;
@@ -238,12 +250,17 @@ internal sealed class MessagePastingService
         }
 
         string phrase = pasties.Count > 1 ? "codeblocks were" : "codeblock was";
-        string response =
-            $"{message.Author.Mention}, your {phrase + (quoteAutomatically ? " automatically" : "")} pasted to {paste.Url}";
+        string automatically = quoteAutomatically ? " automatically" : string.Empty;
+        string response = $"{author.Mention}, your {phrase + automatically} pasted to {paste.Url}";
         await message.Channel.SendMessageAsync(response).ConfigureAwait(false);
 
-        Logger.Info(
-            $"{pasties.Count} {phrase + (quoteAutomatically ? " automatically" : "")} pasted to {paste.Url} ({message.Author})");
+        _logger.LogInformation("{Count}{Phrase}{Automatic} pasted to {Url} ({Author})",
+            pasties.Count,
+            phrase,
+            automatically,
+            paste.Url,
+            author
+        );
         return true;
     }
 
