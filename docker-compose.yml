@@ -1,0 +1,12 @@
+version: '3.9'
+services:
+  pastemystbot:
+    container_name: pastemystbot
+    pull_policy: build
+    build: .
+    volumes:
+      - /var/log/brackeysbot/pastemystbot:/app/logs
+      - /etc/brackeysbot/pastemystbot:/app/data
+    restart: unless-stopped
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
