@@ -1,6 +1,6 @@
 ﻿using DSharpPlus.Entities;
+using PasteMystBot.Extensions;
 using PasteMystNet;
-using X10D.DSharpPlus;
 
 namespace PasteMystBot.Services;
 
@@ -9,7 +9,13 @@ namespace PasteMystBot.Services;
 /// </summary>
 internal sealed class PasteMystService
 {
+    private readonly PasteMystClient _pasteMystClient;
     private const string AutodetectLanguage = "Autodetect";
+
+    public PasteMystService(PasteMystClient pasteMystClient)
+    {
+        _pasteMystClient = pasteMystClient;
+    }
 
     /// <summary>
     ///     Gets the name of a language by its name.
@@ -46,7 +52,7 @@ internal sealed class PasteMystService
 
         try
         {
-            PasteMystLanguage language = await PasteMystLanguage.GetLanguageByExtensionAsync(extension);
+            PasteMystLanguage language = await _pasteMystClient.GetLanguageByExtensionAsync(extension);
             return language.Name;
         }
         catch
@@ -69,7 +75,7 @@ internal sealed class PasteMystService
 
         try
         {
-            PasteMystLanguage language = await PasteMystLanguage.GetLanguageByNameAsync(name);
+            PasteMystLanguage language = await _pasteMystClient.GetLanguageByNameAsync(name);
             return language.Name;
         }
         catch
@@ -105,7 +111,7 @@ internal sealed class PasteMystService
 
         try
         {
-            return await pasteForm.PostPasteAsync().ConfigureAwait(false);
+            return await _pasteMystClient.CreatePasteAsync(pasteForm).ConfigureAwait(false);
         }
         catch
         {

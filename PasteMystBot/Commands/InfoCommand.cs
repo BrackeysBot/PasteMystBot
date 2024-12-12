@@ -4,8 +4,8 @@ using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
 using Humanizer;
+using PasteMystBot.Extensions;
 using PasteMystBot.Services;
-using X10D.DSharpPlus;
 
 namespace PasteMystBot.Commands;
 

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using PasteMystBot.Services;
+using PasteMystNet;
 using X10D.Hosting.DependencyInjection;
 
 Directory.CreateDirectory("data");
@@ -18,6 +19,7 @@ await Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices(services =>
     {
+        services.AddSingleton(new PasteMystClient());
         services.AddSingleton(new DiscordClient(new DiscordConfiguration
         {
             Token = Environment.GetEnvironmentVariable("DISCORD_TOKEN"),

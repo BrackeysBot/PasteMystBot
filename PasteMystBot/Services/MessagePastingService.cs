@@ -95,7 +95,7 @@ internal sealed class MessagePastingService
             {
                 Title = "(untitled)",
                 Language = "Autodetect",
-                Code = content
+                Content = content
             }
         });
 
@@ -160,7 +160,7 @@ internal sealed class MessagePastingService
             {
                 Title = title,
                 Language = language,
-                Code = content
+                Content = content
             });
         }
 
@@ -222,7 +222,7 @@ internal sealed class MessagePastingService
             {
                 Title = "(untitled)",
                 Language = language,
-                Code = codeblock.Content
+                Content = codeblock.Content
             });
         }
 
