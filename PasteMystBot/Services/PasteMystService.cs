@@ -24,10 +24,10 @@ internal sealed class PasteMystService
     /// <returns>The recognized name of the language, or <c>Autodetect</c> if the language failed to be detected.</returns>
     public async Task<string> GetLanguageNameAsync(string? nameOrExtension)
     {
-        nameOrExtension = await GetLanguageNameByExtensionAsync(nameOrExtension).ConfigureAwait(false);
+        nameOrExtension = await GetLanguageNameByExtensionAsync(nameOrExtension);
         if (nameOrExtension == AutodetectLanguage)
         {
-            nameOrExtension = await GetLanguageNameByNameAsync(nameOrExtension).ConfigureAwait(false);
+            nameOrExtension = await GetLanguageNameByNameAsync(nameOrExtension);
         }
 
         return nameOrExtension;
@@ -111,7 +111,7 @@ internal sealed class PasteMystService
 
         try
         {
-            return await _pasteMystClient.CreatePasteAsync(pasteForm).ConfigureAwait(false);
+            return await _pasteMystClient.CreatePasteAsync(pasteForm);
         }
         catch
         {

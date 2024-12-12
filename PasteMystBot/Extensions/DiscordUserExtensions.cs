@@ -46,7 +46,7 @@ internal static class DiscordUserExtensions
 
         try
         {
-            return await guild.GetMemberAsync(user.Id).ConfigureAwait(false);
+            return await guild.GetMemberAsync(user.Id);
         }
         catch (NotFoundException)
         {

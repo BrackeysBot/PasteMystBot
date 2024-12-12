@@ -87,9 +87,9 @@ internal sealed class MessagePastingService
         switch (attachmentsCount)
         {
             case 0 when !contentEmpty && _codeblockDetectionService.IsExclusivelyCodeblocks(content):
-                return await PasteMessageCodeblocksAsync(message, deleteMessage, false).ConfigureAwait(false);
+                return await PasteMessageCodeblocksAsync(message, deleteMessage, false);
             case > 0 when AttachmentsQualifyForPasting(message):
-                return await PasteMessageAttachmentsAsync(message, deleteMessage, false).ConfigureAwait(false);
+                return await PasteMessageAttachmentsAsync(message, deleteMessage, false);
         }
 
         PasteMystPaste? paste = await _pasteMystService.PastePastiesAsync(message.Author, new[]
@@ -109,11 +109,11 @@ internal sealed class MessagePastingService
 
         if (deleteMessage)
         {
-            await message.DeleteAsync("Auto-pasted").ConfigureAwait(false);
+            await message.DeleteAsync("Auto-pasted");
         }
 
         var response = $"{message.Author.Mention}, your message was pasted to {paste.Url}";
-        await message.Channel.SendMessageAsync(response).ConfigureAwait(false);
+        await message.Channel.SendMessageAsync(response);
 
         _logger.LogInformation("Message by {Author} was pasted to {Url} by {User}", message.Author, paste.Url, paster);
         return true;
@@ -143,9 +143,9 @@ internal sealed class MessagePastingService
 
         foreach (DiscordAttachment attachment in message.Attachments)
         {
-            await using Stream stream = await _httpClient.GetStreamAsync(attachment.Url).ConfigureAwait(false);
+            await using Stream stream = await _httpClient.GetStreamAsync(attachment.Url);
             using var reader = new StreamReader(stream);
-            string content = await reader.ReadToEndAsync().ConfigureAwait(false);
+            string content = await reader.ReadToEndAsync();
             string title = attachment.FileName;
             var language = "Autodetect";
 
@@ -156,7 +156,7 @@ internal sealed class MessagePastingService
             else
             {
                 string extension = Path.GetExtension(attachment.FileName);
-                language = await _pasteMystService.GetLanguageNameByExtensionAsync(extension).ConfigureAwait(false);
+                language = await _pasteMystService.GetLanguageNameByExtensionAsync(extension);
             }
 
             pasties.Add(new PasteMystPastyForm
@@ -177,13 +177,13 @@ internal sealed class MessagePastingService
 
         if (deleteMessage)
         {
-            await message.DeleteAsync("Auto-pasted").ConfigureAwait(false);
+            await message.DeleteAsync("Auto-pasted");
         }
 
         string phrase = pasties.Count > 1 ? "attachments were" : "attachment was";
         string automatically = quoteAutomatically ? " automatically" : string.Empty;
         var response = $"{author.Mention}, your {phrase + automatically} pasted to {paste.Url}";
-        await message.Channel.SendMessageAsync(response).ConfigureAwait(false);
+        await message.Channel.SendMessageAsync(response);
 
         _logger.LogInformation("{Count}{Phrase}{Automatic} pasted to {Url} ({Author})",
             pasties.Count,
@@ -226,7 +226,7 @@ internal sealed class MessagePastingService
         foreach (string content in codeblocks)
         {
             Codeblock codeblock = Codeblock.Parse(content);
-            string language = await _pasteMystService.GetLanguageNameAsync(codeblock.Language).ConfigureAwait(false);
+            string language = await _pasteMystService.GetLanguageNameAsync(codeblock.Language);
 
             pasties.Add(new PasteMystPastyForm
             {
@@ -246,13 +246,13 @@ internal sealed class MessagePastingService
 
         if (deleteMessage)
         {
-            await message.DeleteAsync("Auto-pasted").ConfigureAwait(false);
+            await message.DeleteAsync("Auto-pasted");
         }
 
         string phrase = pasties.Count > 1 ? "codeblocks were" : "codeblock was";
         string automatically = quoteAutomatically ? " automatically" : string.Empty;
         string response = $"{author.Mention}, your {phrase + automatically} pasted to {paste.Url}";
-        await message.Channel.SendMessageAsync(response).ConfigureAwait(false);
+        await message.Channel.SendMessageAsync(response);
 
         _logger.LogInformation("{Count}{Phrase}{Automatic} pasted to {Url} ({Author})",
             pasties.Count,
