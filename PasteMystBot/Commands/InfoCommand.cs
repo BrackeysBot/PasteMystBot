@@ -31,18 +31,18 @@ internal sealed class InfoCommand : ApplicationCommandModule
     {
         DiscordClient client = context.Client;
         DiscordMember member = (await client.CurrentUser.GetAsMemberOfAsync(context.Guild))!;
-        string hammerVersion = _botService.Version;
+        string botVersion = _botService.Version;
 
         var embed = new DiscordEmbedBuilder();
         embed.WithAuthor(member);
         embed.WithColor(member.Color);
         embed.WithThumbnail(member.AvatarUrl);
-        embed.WithTitle($"PasteMystBot v{hammerVersion}");
+        embed.WithTitle($"PasteMystBot v{botVersion}");
         embed.AddField("Ping", client.Ping, true);
         embed.AddField("Uptime", (DateTimeOffset.UtcNow - _botService.StartedAt).Humanize(), true);
 
         var builder = new StringBuilder();
-        builder.AppendLine($"Hammer: {hammerVersion}");
+        builder.AppendLine($"PasteMystBot: {botVersion}");
         builder.AppendLine($"D#+: {client.VersionString}");
         builder.AppendLine($"Gateway: {client.GatewayVersion}");
         builder.AppendLine($"CLR: {Environment.Version.ToString(3)}");
