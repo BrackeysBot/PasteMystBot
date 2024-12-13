@@ -41,9 +41,7 @@ builder.Services.AddSingleton<CodeblockDetectionService>();
 builder.Services.AddSingleton<MessagePastingService>();
 builder.Services.AddSingleton<PasteMystService>();
 
-builder.Services.AddHostedSingleton<FileAttachmentListeningService>();
 builder.Services.AddHostedSingleton<MessageListeningService>();
-
 builder.Services.AddHostedSingleton<BotService>();
 
 IHost app = builder.Build();

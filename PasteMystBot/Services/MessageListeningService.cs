@@ -30,23 +30,13 @@ internal sealed class MessageListeningService : BackgroundService
         return Task.CompletedTask;
     }
 
-    private Task DiscordClientOnMessageCreated(DiscordClient sender, MessageCreateEventArgs e)
+    private async Task DiscordClientOnMessageCreated(DiscordClient sender, MessageCreateEventArgs e)
     {
         if (_messagePastingService.IsChannelExempt(e.Channel))
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        if (string.IsNullOrWhiteSpace(e.Message.Content))
-        {
-            return Task.CompletedTask;
-        }
-
-        if (e.Message.Attachments.Count > 0 || !_messagePastingService.QualifiesForPasting(e.Message))
-        {
-            return Task.CompletedTask;
-        }
-
-        return _messagePastingService.PasteMessageCodeblocksAsync(e.Message);
+        await _messagePastingService.PasteMessageAsync(e.Message);
     }
 }

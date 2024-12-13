@@ -1,5 +1,4 @@
 ﻿using DSharpPlus.Entities;
-using Humanizer;
 using Microsoft.Extensions.Logging;
 using PasteMystBot.Extensions;
 using PasteMystNet;
@@ -24,6 +23,33 @@ internal sealed class PasteMystService
     {
         _logger = logger;
         _pasteMystClient = pasteMystClient;
+    }
+
+    public async Task<PasteMystPaste> CreatePasteAsync(DiscordUser user, PasteMystPastyForm[] forms)
+    {
+        if (user is null)
+        {
+            throw new ArgumentNullException(nameof(user));
+        }
+
+        if (forms is null)
+        {
+            throw new ArgumentNullException(nameof(forms));
+        }
+
+        if (forms.Length == 0)
+        {
+            throw new ArgumentException("Cannot submit empty form set.", nameof(forms));
+        }
+
+        var form = new PasteMystPasteForm
+        {
+            Title = $"Automatic paste by {user.GetUsernameWithDiscriminator()}",
+            Pasties = forms
+        };
+
+        _logger.LogInformation("Creating paste from form with {Count} pasties", form.Pasties.Count);
+        return await _pasteMystClient.CreatePasteAsync(form);
     }
 
     /// <summary>
@@ -90,43 +116,6 @@ internal sealed class PasteMystService
         catch
         {
             return AutodetectLanguage;
-        }
-    }
-
-    /// <summary>
-    ///     Uploads an enumerable collection of pasties to PasteMyst, attributed to the specified user.
-    /// </summary>
-    /// <param name="user">The user who should be attributed for the paste.</param>
-    /// <param name="pasties">The pasties to upload.</param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentNullException">
-    ///     <paramref name="user" /> or <paramref name="pasties" /> is <see langword="null" />.
-    /// </exception>
-    public async Task<PasteMystPaste?> PastePastiesAsync(DiscordUser user, IReadOnlyList<PasteMystPastyForm> pasties)
-    {
-        ArgumentNullException.ThrowIfNull(user);
-        ArgumentNullException.ThrowIfNull(pasties);
-
-        if (pasties.Count == 0)
-        {
-            return null;
-        }
-
-        var pasteForm = new PasteMystPasteForm
-        {
-            Title = $"Automatic paste by {user.GetUsernameWithDiscriminator()}",
-            Pasties = pasties.ToArray()
-        };
-
-        try
-        {
-            string quantity = "pastie".ToQuantity(pasteForm.Pasties.Count);
-            _logger.LogInformation("Creating paste: {Title}, {Count}", pasteForm.Title, quantity);
-            return await _pasteMystClient.CreatePasteAsync(pasteForm);
-        }
-        catch
-        {
-            return null;
         }
     }
 }

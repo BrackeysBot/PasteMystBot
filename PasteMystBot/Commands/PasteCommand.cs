@@ -1,7 +1,9 @@
-﻿using DSharpPlus;
+﻿using System.Diagnostics.CodeAnalysis;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
+using Humanizer;
 using PasteMystBot.Services;
 
 namespace PasteMystBot.Commands;
@@ -22,18 +24,48 @@ internal sealed class PasteCommand : ApplicationCommandModule
         _messagePastingService = messagePastingService;
     }
 
-    [ContextMenu(ApplicationCommandType.MessageContextMenu, "Paste (Keep Message)", false)]
+    [ContextMenu(ApplicationCommandType.MessageContextMenu, "Paste Whole (KEEP)", false)]
     [SlashRequireGuild]
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    public async Task UploadMessageKeepMessageAsync(ContextMenuContext context)
+    {
+        await ForcePasteMessageAsync(context, false);
+    }
+
+    [ContextMenu(ApplicationCommandType.MessageContextMenu, "Paste Whole (DELETE)", false)]
+    [SlashRequireGuild]
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    public async Task UploadMessageDeleteMessageAsync(ContextMenuContext context)
+    {
+        await ForcePasteMessageAsync(context, true);
+    }
+
+    [ContextMenu(ApplicationCommandType.MessageContextMenu, "Paste Qualifying (KEEP)", false)]
+    [SlashRequireGuild]
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public async Task UploadPasteKeepMessageAsync(ContextMenuContext context)
     {
         await PasteMessageAsync(context, false);
     }
 
-    [ContextMenu(ApplicationCommandType.MessageContextMenu, "Paste (Delete Message)", false)]
+    [ContextMenu(ApplicationCommandType.MessageContextMenu, "Paste Qualifying (DELETE)", false)]
     [SlashRequireGuild]
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public async Task UploadPasteDeleteMessageAsync(ContextMenuContext context)
     {
         await PasteMessageAsync(context, true);
+    }
+
+    private async Task ForcePasteMessageAsync(ContextMenuContext context, bool deleteMessage)
+    {
+        DiscordMessage message = context.TargetMessage;
+
+        await context.DeferAsync(true);
+        await _messagePastingService.ForcePasteMessageAsync(message, context.Member, deleteMessage);
+
+        var builder = new DiscordWebhookBuilder();
+        builder.WithContent("Message was pasted");
+        await context.EditResponseAsync(builder);
     }
 
     private async Task PasteMessageAsync(ContextMenuContext context, bool deleteMessage)
@@ -41,10 +73,18 @@ internal sealed class PasteCommand : ApplicationCommandModule
         DiscordMessage message = context.TargetMessage;
 
         await context.DeferAsync(true);
-        await _messagePastingService.PasteMessageAsync(message, context.Member, deleteMessage);
+        int forms = await _messagePastingService.PasteMessageAsync(message, context.Member, deleteMessage, true);
 
         var builder = new DiscordWebhookBuilder();
-        builder.WithContent("Message pasted");
+        if (forms > 0)
+        {
+            builder.WithContent($"{"qualifying element".ToQuantity(forms)} {(forms > 1 ? "were" : "was")} pasted");
+        }
+        else
+        {
+            builder.WithContent("No qualifying elements detected. Did you mean to **Paste Whole** instead?");
+        }
+
         await context.EditResponseAsync(builder);
     }
 }
